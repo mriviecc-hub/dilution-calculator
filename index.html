@@ -1,0 +1,431 @@
+<h2 class="sr-only">Comprehensive lab dilution and concentration calculator with five modes: C1V1=C2V2, weight-to-volume, weight-to-weight, molarity, and serial dilutions.</h2>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);color:var(--color-text-primary);font-size:14px}
+.wrap{padding:1rem 0}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:1.5rem;border-bottom:0.5px solid var(--color-border-tertiary);padding-bottom:0}
+.tab{padding:8px 14px;border:none;background:none;cursor:pointer;font-size:13px;color:var(--color-text-secondary);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:var(--font-sans)}
+.tab.active{color:var(--color-text-primary);border-bottom-color:var(--color-text-primary);font-weight:500}
+.tab:hover:not(.active){color:var(--color-text-primary)}
+.panel{display:none}.panel.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:1rem}
+.field{display:flex;flex-direction:column;gap:4px}
+label{font-size:12px;color:var(--color-text-secondary);font-weight:500;text-transform:uppercase;letter-spacing:0.04em}
+.input-row{display:flex;gap:0}
+.input-row input{flex:1;border-radius:var(--border-radius-md) 0 0 var(--border-radius-md);border-right:none}
+.input-row select{border-radius:0 var(--border-radius-md) var(--border-radius-md) 0;width:auto;min-width:80px;font-size:13px}
+.unknown-btn{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--color-text-secondary);cursor:pointer;user-select:none}
+.unknown-btn input[type=radio]{cursor:pointer}
+.solve-btn{display:block;width:100%;padding:10px;margin:1rem 0;font-size:14px;font-weight:500;cursor:pointer;border-radius:var(--border-radius-md)}
+.result-box{background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-top:0.5rem;display:none}
+.result-box.show{display:block}
+.result-main{font-size:22px;font-weight:500;margin-bottom:6px}
+.result-detail{font-size:13px;color:var(--color-text-secondary);line-height:1.6}
+.error{color:var(--color-text-danger);font-size:13px;margin-top:0.5rem;display:none}
+.error.show{display:block}
+.serial-table{width:100%;border-collapse:collapse;margin-top:1rem;font-size:13px}
+.serial-table th{text-align:left;padding:6px 10px;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary)}
+.serial-table td{padding:7px 10px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.serial-table tr:last-child td{border-bottom:none}
+.serial-table tr:nth-child(even) td{background:var(--color-background-secondary)}
+.section-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-text-tertiary);margin:1.25rem 0 0.5rem}
+.unknown-wrap{display:flex;gap:16px;margin-top:6px;flex-wrap:wrap}
+</style>
+
+<div class="wrap">
+<div class="tabs">
+  <button class="tab active" onclick="showTab('c1v1')">C₁V₁ = C₂V₂</button>
+  <button class="tab" onclick="showTab('wv')">Weight / Volume</button>
+  <button class="tab" onclick="showTab('ww')">Weight / Weight</button>
+  <button class="tab" onclick="showTab('mol')">Molarity</button>
+  <button class="tab" onclick="showTab('serial')">Serial dilution</button>
+</div>
+
+<!-- C1V1=C2V2 -->
+<div id="tab-c1v1" class="panel active">
+  <p class="section-label">Solve for any unknown — select which field to calculate</p>
+  <div class="unknown-wrap" id="c1v1-unknown-wrap">
+    <label class="unknown-btn"><input type="radio" name="c1v1u" value="c1"> C₁ (stock conc.)</label>
+    <label class="unknown-btn"><input type="radio" name="c1v1u" value="v1"> V₁ (stock volume)</label>
+    <label class="unknown-btn"><input type="radio" name="c1v1u" value="c2"> C₂ (final conc.)</label>
+    <label class="unknown-btn"><input type="radio" name="c1v1u" value="v2" checked> V₂ (final volume)</label>
+  </div>
+  <div class="grid" style="margin-top:1rem">
+    <div class="field"><label>C₁ — stock concentration</label><div class="input-row"><input type="number" id="c1v1-c1" placeholder="e.g. 1000"><select id="c1v1-c1u"><option>mg/mL</option><option>µg/mL</option><option>g/L</option><option>mol/L (M)</option><option>mmol/L (mM)</option><option>µmol/L (µM)</option><option>% (w/v)</option></select></div></div>
+    <div class="field"><label>V₁ — stock volume to use</label><div class="input-row"><input type="number" id="c1v1-v1" placeholder="e.g. 10"><select id="c1v1-v1u"><option>mL</option><option>µL</option><option>L</option></select></div></div>
+    <div class="field"><label>C₂ — desired concentration</label><div class="input-row"><input type="number" id="c1v1-c2" placeholder="e.g. 10"><select id="c1v1-c2u"><option>mg/mL</option><option>µg/mL</option><option>g/L</option><option>mol/L (M)</option><option>mmol/L (mM)</option><option>µmol/L (µM)</option><option>% (w/v)</option></select></div></div>
+    <div class="field"><label>V₂ — final (total) volume</label><div class="input-row"><input type="number" id="c1v1-v2" placeholder="e.g. 100"><select id="c1v1-v2u"><option>mL</option><option>µL</option><option>L</option></select></div></div>
+  </div>
+  <button class="solve-btn" onclick="solveC1V1()">Calculate</button>
+  <div class="error" id="c1v1-err"></div>
+  <div class="result-box" id="c1v1-res">
+    <div class="result-main" id="c1v1-main"></div>
+    <div class="result-detail" id="c1v1-detail"></div>
+  </div>
+</div>
+
+<!-- Weight/Volume -->
+<div id="tab-wv" class="panel">
+  <p class="section-label">Solve for any unknown — select which field to calculate</p>
+  <div class="unknown-wrap">
+    <label class="unknown-btn"><input type="radio" name="wvu" value="mass"> Mass of solute</label>
+    <label class="unknown-btn"><input type="radio" name="wvu" value="vol" checked> Volume of solvent</label>
+    <label class="unknown-btn"><input type="radio" name="wvu" value="conc"> Concentration</label>
+  </div>
+  <div class="grid" style="margin-top:1rem">
+    <div class="field"><label>Mass of solute</label><div class="input-row"><input type="number" id="wv-mass" placeholder="e.g. 5"><select id="wv-massu"><option>g</option><option>mg</option><option>µg</option><option>kg</option></select></div></div>
+    <div class="field"><label>Volume of solution</label><div class="input-row"><input type="number" id="wv-vol" placeholder="e.g. 100"><select id="wv-volu"><option>mL</option><option>L</option><option>µL</option></select></div></div>
+    <div class="field"><label>Concentration</label><div class="input-row"><input type="number" id="wv-conc" placeholder="e.g. 50"><select id="wv-concu"><option>mg/mL</option><option>g/L</option><option>µg/mL</option><option>% (w/v)</option><option>µg/L</option></select></div></div>
+  </div>
+  <button class="solve-btn" onclick="solveWV()">Calculate</button>
+  <div class="error" id="wv-err"></div>
+  <div class="result-box" id="wv-res">
+    <div class="result-main" id="wv-main"></div>
+    <div class="result-detail" id="wv-detail"></div>
+  </div>
+</div>
+
+<!-- Weight/Weight -->
+<div id="tab-ww" class="panel">
+  <p class="section-label">Solve for any unknown — select which field to calculate</p>
+  <div class="unknown-wrap">
+    <label class="unknown-btn"><input type="radio" name="wwu" value="solute"> Mass of solute</label>
+    <label class="unknown-btn"><input type="radio" name="wwu" value="total" checked> Total solution mass</label>
+    <label class="unknown-btn"><input type="radio" name="wwu" value="pct"> % w/w</label>
+  </div>
+  <div class="grid" style="margin-top:1rem">
+    <div class="field"><label>Mass of solute</label><div class="input-row"><input type="number" id="ww-solute" placeholder="e.g. 5"><select id="ww-soluteu"><option>g</option><option>mg</option><option>µg</option><option>kg</option></select></div></div>
+    <div class="field"><label>Total solution mass</label><div class="input-row"><input type="number" id="ww-total" placeholder="e.g. 100"><select id="ww-totalu"><option>g</option><option>mg</option><option>kg</option></select></div></div>
+    <div class="field"><label>Concentration (% w/w)</label><div class="input-row"><input type="number" id="ww-pct" placeholder="e.g. 5" style="border-radius:var(--border-radius-md)"></div></div>
+  </div>
+  <button class="solve-btn" onclick="solveWW()">Calculate</button>
+  <div class="error" id="ww-err"></div>
+  <div class="result-box" id="ww-res">
+    <div class="result-main" id="ww-main"></div>
+    <div class="result-detail" id="ww-detail"></div>
+  </div>
+</div>
+
+<!-- Molarity -->
+<div id="tab-mol" class="panel">
+  <p class="section-label">Convert between mass, volume, molarity, and molecular weight</p>
+  <div class="unknown-wrap">
+    <label class="unknown-btn"><input type="radio" name="molu" value="mass"> Mass</label>
+    <label class="unknown-btn"><input type="radio" name="molu" value="vol"> Volume</label>
+    <label class="unknown-btn"><input type="radio" name="molu" value="molarity" checked> Molarity</label>
+    <label class="unknown-btn"><input type="radio" name="molu" value="mw"> Molecular weight</label>
+  </div>
+  <div class="grid" style="margin-top:1rem">
+    <div class="field"><label>Mass of solute</label><div class="input-row"><input type="number" id="mol-mass" placeholder="e.g. 3.6"><select id="mol-massu"><option>g</option><option>mg</option><option>µg</option><option>kg</option></select></div></div>
+    <div class="field"><label>Volume of solution</label><div class="input-row"><input type="number" id="mol-vol" placeholder="e.g. 1"><select id="mol-volu"><option>L</option><option>mL</option><option>µL</option></select></div></div>
+    <div class="field"><label>Molarity</label><div class="input-row"><input type="number" id="mol-molarity" placeholder="e.g. 0.5"><select id="mol-molarityu"><option>mol/L (M)</option><option>mmol/L (mM)</option><option>µmol/L (µM)</option></select></div></div>
+    <div class="field"><label>Molecular weight (g/mol)</label><div class="input-row"><input type="number" id="mol-mw" placeholder="e.g. 180.16" style="border-radius:var(--border-radius-md)"></div></div>
+  </div>
+  <p class="section-label" style="margin-top:0.5rem">Also convert concentration units</p>
+  <div class="grid">
+    <div class="field"><label>Input concentration</label><div class="input-row"><input type="number" id="mol-inconc" placeholder="e.g. 50"><select id="mol-inconcu"><option>mg/mL</option><option>µg/mL</option><option>g/L</option><option>% (w/v)</option></select></div></div>
+    <div class="field"><label>Target unit</label><div class="input-row"><select id="mol-outconcu" style="border-radius:var(--border-radius-md);width:100%"><option>mol/L (M)</option><option>mmol/L (mM)</option><option>µmol/L (µM)</option><option>mg/mL</option><option>µg/mL</option><option>g/L</option></select></div></div>
+  </div>
+  <button class="solve-btn" onclick="solveMol()">Calculate</button>
+  <div class="error" id="mol-err"></div>
+  <div class="result-box" id="mol-res">
+    <div class="result-main" id="mol-main"></div>
+    <div class="result-detail" id="mol-detail"></div>
+  </div>
+</div>
+
+<!-- Serial Dilution -->
+<div id="tab-serial" class="panel">
+  <div class="grid">
+    <div class="field"><label>Starting concentration</label><div class="input-row"><input type="number" id="ser-start" placeholder="e.g. 1000"><select id="ser-startu"><option>mg/mL</option><option>µg/mL</option><option>g/L</option><option>mol/L (M)</option><option>mmol/L (mM)</option><option>µmol/L (µM)</option><option>% (w/v)</option></select></div></div>
+    <div class="field"><label>Dilution factor (per step)</label><div class="input-row"><input type="number" id="ser-factor" placeholder="e.g. 10" style="border-radius:var(--border-radius-md)"></div></div>
+    <div class="field"><label>Number of steps</label><div class="input-row"><input type="number" id="ser-steps" placeholder="e.g. 6" min="1" max="20" style="border-radius:var(--border-radius-md)"></div></div>
+    <div class="field"><label>Volume per tube</label><div class="input-row"><input type="number" id="ser-vol" placeholder="e.g. 1"><select id="ser-volu"><option>mL</option><option>µL</option><option>L</option></select></div></div>
+  </div>
+  <button class="solve-btn" onclick="solveSerial()">Generate dilution series</button>
+  <div class="error" id="ser-err"></div>
+  <div id="ser-res"></div>
+</div>
+</div>
+
+<script>
+function showTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.toggle('active',['c1v1','wv','ww','mol','serial'][i]===id)});
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+function fmtNum(n){
+  if(n===0)return'0';
+  if(Math.abs(n)<0.001||Math.abs(n)>=1e7)return n.toExponential(4);
+  if(Math.abs(n)<1)return parseFloat(n.toPrecision(5))+'';
+  return parseFloat(n.toPrecision(6))+'';
+}
+
+function toML(v,u){return u==='L'?v*1000:u==='µL'?v/1000:v}
+function fromML(v,u){return u==='L'?v/1000:u==='µL'?v*1000:v}
+function toG(m,u){return u==='kg'?m*1000:u==='mg'?m/1000:u==='µg'?m/1e6:m}
+function fromG(m,u){return u==='kg'?m/1000:u==='mg'?m*1000:u==='µg'?m*1e6:m}
+function concToMgML(c,u){
+  if(u==='mg/mL')return c;
+  if(u==='µg/mL')return c/1000;
+  if(u==='g/L')return c;
+  if(u==='% (w/v)')return c*10;
+  if(u==='µg/L')return c/1e6;
+  return c;
+}
+function mgMLToUnit(c,u){
+  if(u==='mg/mL')return c;
+  if(u==='µg/mL')return c*1000;
+  if(u==='g/L')return c;
+  if(u==='% (w/v)')return c/10;
+  if(u==='µg/L')return c*1e6;
+  return c;
+}
+function molarConcToM(c,u){
+  if(u==='mol/L (M)')return c;
+  if(u==='mmol/L (mM)')return c/1000;
+  if(u==='µmol/L (µM)')return c/1e6;
+  return c;
+}
+function mFromM(c,u){
+  if(u==='mol/L (M)')return c;
+  if(u==='mmol/L (mM)')return c*1000;
+  if(u==='µmol/L (µM)')return c*1e6;
+  return c;
+}
+
+function isMolar(u){return u.includes('mol/L')||u.includes('mM')||u.includes('µM')}
+
+function concInCommon(c,u){
+  if(isMolar(u))return{val:molarConcToM(c,u),type:'M'};
+  return{val:concToMgML(c,u),type:'mgml'};
+}
+
+function showRes(id,main,detail){
+  const r=document.getElementById(id+'-res');
+  r.classList.add('show');
+  document.getElementById(id+'-main').textContent=main;
+  document.getElementById(id+'-detail').textContent=detail;
+}
+function showErr(id,msg){
+  const e=document.getElementById(id+'-err');
+  e.textContent=msg;e.classList.add('show');
+}
+function clearFeedback(id){
+  document.getElementById(id+'-res').classList.remove('show');
+  const e=document.getElementById(id+'-err');
+  e.classList.remove('show');e.textContent='';
+}
+
+function getRadio(name){return document.querySelector(`input[name="${name}"]:checked`)?.value}
+function v(id){return parseFloat(document.getElementById(id).value)}
+function su(id){return document.getElementById(id).value}
+
+function solveC1V1(){
+  clearFeedback('c1v1');
+  const unk=getRadio('c1v1u');
+  const c1u=su('c1v1-c1u'),v1u=su('c1v1-v1u'),c2u=su('c1v1-c2u'),v2u=su('c1v1-v2u');
+  const sameConcType=(isMolar(c1u)===isMolar(c2u));
+  if(!sameConcType)return showErr('c1v1','C₁ and C₂ must be in the same concentration type (both mass-based or both molar).');
+
+  if(unk==='v2'){
+    const c1=v('c1v1-c1'),v1=v('c1v1-v1'),c2=v('c1v1-c2');
+    if([c1,v1,c2].some(isNaN)||c2===0)return showErr('c1v1','Please enter valid values for C₁, V₁, and C₂.');
+    const v1ml=toML(v1,v1u);
+    const c1n=isMolar(c1u)?molarConcToM(c1,c1u):concToMgML(c1,c1u);
+    const c2n=isMolar(c2u)?molarConcToM(c2,c2u):concToMgML(c2,c2u);
+    const v2ml=c1n*v1ml/c2n;
+    const v2=fromML(v2ml,v2u);
+    const dil=v2ml-v1ml;
+    showRes('c1v1',`V₂ = ${fmtNum(v2)} ${v2u}`,`Add ${fmtNum(fromML(v1ml,v1u))} ${v1u} of stock to ${fmtNum(fromML(dil<0?0:dil,v1u))} ${v1u} of diluent → total ${fmtNum(v2)} ${v2u}`);
+  } else if(unk==='v1'){
+    const c1=v('c1v1-c1'),c2=v('c1v1-c2'),v2=v('c1v1-v2');
+    if([c1,c2,v2].some(isNaN)||c1===0)return showErr('c1v1','Please enter valid values for C₁, C₂, and V₂.');
+    const v2ml=toML(v2,v2u);
+    const c1n=isMolar(c1u)?molarConcToM(c1,c1u):concToMgML(c1,c1u);
+    const c2n=isMolar(c2u)?molarConcToM(c2,c2u):concToMgML(c2,c2u);
+    const v1ml=c2n*v2ml/c1n;
+    const v1=fromML(v1ml,v1u);
+    showRes('c1v1',`V₁ = ${fmtNum(v1)} ${v1u}`,`Take ${fmtNum(v1)} ${v1u} of stock and dilute to ${fmtNum(v2)} ${v2u}`);
+  } else if(unk==='c1'){
+    const v1=v('c1v1-v1'),c2=v('c1v1-c2'),v2=v('c1v1-v2');
+    if([v1,c2,v2].some(isNaN)||v1===0)return showErr('c1v1','Please enter valid values for V₁, C₂, and V₂.');
+    const v1ml=toML(v1,v1u),v2ml=toML(v2,v2u);
+    const c2n=isMolar(c2u)?molarConcToM(c2,c2u):concToMgML(c2,c2u);
+    const c1n=c2n*v2ml/v1ml;
+    const c1=isMolar(c1u)?mFromM(c1n,c1u):mgMLToUnit(c1n,c1u);
+    showRes('c1v1',`C₁ = ${fmtNum(c1)} ${c1u}`,`Required stock concentration to achieve ${fmtNum(c2)} ${c2u} in ${fmtNum(v2)} ${v2u} using ${fmtNum(v1)} ${v1u}`);
+  } else {
+    const c1=v('c1v1-c1'),v1=v('c1v1-v1'),v2=v('c1v1-v2');
+    if([c1,v1,v2].some(isNaN)||v2===0)return showErr('c1v1','Please enter valid values for C₁, V₁, and V₂.');
+    const v1ml=toML(v1,v1u),v2ml=toML(v2,v2u);
+    const c1n=isMolar(c1u)?molarConcToM(c1,c1u):concToMgML(c1,c1u);
+    const c2n=c1n*v1ml/v2ml;
+    const c2=isMolar(c2u)?mFromM(c2n,c2u):mgMLToUnit(c2n,c2u);
+    showRes('c1v1',`C₂ = ${fmtNum(c2)} ${c2u}`,`Resulting concentration after diluting ${fmtNum(v1)} ${v1u} of ${fmtNum(c1)} ${c1u} to ${fmtNum(v2)} ${v2u}`);
+  }
+}
+
+function solveWV(){
+  clearFeedback('wv');
+  const unk=getRadio('wvu');
+  if(unk==='vol'){
+    const mass=v('wv-mass'),conc=v('wv-conc');
+    if([mass,conc].some(isNaN)||conc===0)return showErr('wv','Enter mass and concentration.');
+    const massG=toG(mass,su('wv-massu'));
+    const cu=su('wv-concu');
+    let volML;
+    if(cu==='mg/mL')volML=massG*1000/conc;
+    else if(cu==='g/L')volML=massG*1000/conc;
+    else if(cu==='µg/mL')volML=massG*1e6/conc;
+    else if(cu==='% (w/v)')volML=massG*100/conc;
+    else if(cu==='µg/L')volML=massG*1e9/conc;
+    else volML=massG/conc*1000;
+    const volu=su('wv-volu');
+    showRes('wv',`Volume = ${fmtNum(fromML(volML,volu))} ${volu}`,`Dissolve ${fmtNum(mass)} ${su('wv-massu')} into ${fmtNum(fromML(volML,volu))} ${volu} to get ${fmtNum(conc)} ${cu}`);
+  } else if(unk==='mass'){
+    const conc=v('wv-conc'),vol=v('wv-vol');
+    if([conc,vol].some(isNaN))return showErr('wv','Enter concentration and volume.');
+    const volML=toML(vol,su('wv-volu'));
+    const cu=su('wv-concu');
+    let massG;
+    if(cu==='mg/mL')massG=conc*volML/1000;
+    else if(cu==='g/L')massG=conc*volML/1000;
+    else if(cu==='µg/mL')massG=conc*volML/1e6;
+    else if(cu==='% (w/v)')massG=conc*volML/100;
+    else massG=conc*volML/1000;
+    const mu=su('wv-massu');
+    showRes('wv',`Mass = ${fmtNum(fromG(massG,mu))} ${mu}`,`Weigh out ${fmtNum(fromG(massG,mu))} ${mu} and dissolve in ${fmtNum(vol)} ${su('wv-volu')}`);
+  } else {
+    const mass=v('wv-mass'),vol=v('wv-vol');
+    if([mass,vol].some(isNaN)||vol===0)return showErr('wv','Enter mass and volume.');
+    const massG=toG(mass,su('wv-massu'));
+    const volML=toML(vol,su('wv-volu'));
+    const cu=su('wv-concu');
+    let conc;
+    if(cu==='mg/mL')conc=massG*1000/volML;
+    else if(cu==='g/L')conc=massG*1000/volML;
+    else if(cu==='µg/mL')conc=massG*1e6/volML;
+    else if(cu==='% (w/v)')conc=massG*100/volML;
+    else conc=massG*1000/volML;
+    showRes('wv',`Concentration = ${fmtNum(conc)} ${cu}`,`${fmtNum(mass)} ${su('wv-massu')} dissolved in ${fmtNum(vol)} ${su('wv-volu')}`);
+  }
+}
+
+function solveWW(){
+  clearFeedback('ww');
+  const unk=getRadio('wwu');
+  if(unk==='total'){
+    const solute=v('ww-solute'),pct=v('ww-pct');
+    if([solute,pct].some(isNaN)||pct===0||pct>100)return showErr('ww','Enter valid solute mass and % w/w (0–100).');
+    const soluteG=toG(solute,su('ww-soluteu'));
+    const totalG=soluteG*100/pct;
+    const tu=su('ww-totalu');
+    showRes('ww',`Total mass = ${fmtNum(fromG(totalG,tu))} ${tu}`,`Add ${fmtNum(fromG(totalG-soluteG,tu))} ${tu} of solvent to ${fmtNum(solute)} ${su('ww-soluteu')} of solute`);
+  } else if(unk==='solute'){
+    const total=v('ww-total'),pct=v('ww-pct');
+    if([total,pct].some(isNaN)||pct===0||pct>100)return showErr('ww','Enter valid total mass and % w/w.');
+    const totalG=toG(total,su('ww-totalu'));
+    const soluteG=pct*totalG/100;
+    const su2=su('ww-soluteu');
+    showRes('ww',`Solute mass = ${fmtNum(fromG(soluteG,su2))} ${su2}`,`${pct}% w/w of ${fmtNum(total)} ${su('ww-totalu')} = ${fmtNum(fromG(soluteG,su2))} ${su2} solute`);
+  } else {
+    const solute=v('ww-solute'),total=v('ww-total');
+    if([solute,total].some(isNaN)||total===0)return showErr('ww','Enter solute and total mass.');
+    const soluteG=toG(solute,su('ww-soluteu'));
+    const totalG=toG(total,su('ww-totalu'));
+    const pct=soluteG/totalG*100;
+    showRes('ww',`Concentration = ${fmtNum(pct)} % w/w`,`${fmtNum(solute)} ${su('ww-soluteu')} in ${fmtNum(total)} ${su('ww-totalu')}`);
+  }
+}
+
+function solveMol(){
+  clearFeedback('mol');
+  const unk=getRadio('molu');
+  const mw=v('mol-mw');
+  const inconc=v('mol-inconc');
+  const results=[];
+
+  if(unk==='molarity'){
+    const mass=v('mol-mass'),vol=v('mol-vol');
+    if([mass,vol].some(isNaN))return showErr('mol','Enter mass and volume.');
+    if(isNaN(mw)||mw<=0)return showErr('mol','Molecular weight is required for molarity calculation.');
+    const massG=toG(mass,su('mol-massu'));
+    const volL=toML(vol,su('mol-volu'))/1000;
+    const moles=massG/mw;
+    const M=moles/volL;
+    const mu=su('mol-molarityu');
+    results.push(`Molarity = ${fmtNum(mFromM(M,mu))} ${mu}`);
+    results.push(`= ${fmtNum(M*1000)} mmol/L | ${fmtNum(M*1e6)} µmol/L`);
+    results.push(`Also = ${fmtNum(massG/toML(vol,su('mol-volu'))*1000)} mg/mL`);
+  } else if(unk==='mass'){
+    const molarity=v('mol-molarity'),vol=v('mol-vol');
+    if([molarity,vol].some(isNaN))return showErr('mol','Enter molarity and volume.');
+    if(isNaN(mw)||mw<=0)return showErr('mol','Molecular weight is required.');
+    const M=molarConcToM(molarity,su('mol-molarityu'));
+    const volL=toML(vol,su('mol-volu'))/1000;
+    const massG=M*volL*mw;
+    const mu=su('mol-massu');
+    results.push(`Mass = ${fmtNum(fromG(massG,mu))} ${mu}`);
+    results.push(`Moles = ${fmtNum(M*volL*1000)} mmol`);
+  } else if(unk==='vol'){
+    const mass=v('mol-mass'),molarity=v('mol-molarity');
+    if([mass,molarity].some(isNaN))return showErr('mol','Enter mass and molarity.');
+    if(isNaN(mw)||mw<=0)return showErr('mol','Molecular weight is required.');
+    const massG=toG(mass,su('mol-massu'));
+    const M=molarConcToM(molarity,su('mol-molarityu'));
+    const volL=massG/(M*mw);
+    const vu=su('mol-volu');
+    results.push(`Volume = ${fmtNum(fromML(volL*1000,vu))} ${vu}`);
+  } else {
+    const mass=v('mol-mass'),molarity=v('mol-molarity'),vol=v('mol-vol');
+    if([mass,molarity,vol].some(isNaN))return showErr('mol','Enter mass, molarity, and volume.');
+    const massG=toG(mass,su('mol-massu'));
+    const M=molarConcToM(molarity,su('mol-molarityu'));
+    const volL=toML(vol,su('mol-volu'))/1000;
+    const moles=M*volL;
+    const calcMW=massG/moles;
+    results.push(`Molecular weight = ${fmtNum(calcMW)} g/mol`);
+    results.push(`Moles in solution: ${fmtNum(moles*1000)} mmol`);
+  }
+
+  if(!isNaN(inconc)&&inconc>0&&!isNaN(mw)&&mw>0){
+    const incu=su('mol-inconcu');
+    const outcu=su('mol-outconcu');
+    const mgml=concToMgML(inconc,incu);
+    let out;
+    if(outcu==='mol/L (M)')out=mgml/mw;
+    else if(outcu==='mmol/L (mM)')out=mgml/mw*1000;
+    else if(outcu==='µmol/L (µM)')out=mgml/mw*1e6;
+    else out=mgMLToUnit(mgml,outcu);
+    results.push(`Conc. conversion: ${fmtNum(inconc)} ${incu} = ${fmtNum(out)} ${outcu}`);
+  }
+
+  if(results.length===0)return showErr('mol','Nothing to calculate.');
+  showRes('mol',results[0],results.slice(1).join('\n'));
+}
+
+function solveSerial(){
+  clearFeedback('ser');
+  const start=v('ser-start'),factor=v('ser-factor'),steps=v('ser-steps'),vol=v('ser-vol');
+  if([start,factor,steps,vol].some(isNaN)||factor<=1||steps<1||steps>20)
+    return showErr('ser','Enter valid values. Factor must be >1, steps 1–20.');
+  const volu=su('ser-volu'),startu=su('ser-startu');
+  const volML=toML(vol,volu);
+  const stockML=volML/factor;
+  const dilML=volML-stockML;
+
+  let html=`<table class="serial-table"><thead><tr><th>Tube</th><th>Concentration</th><th>Dilution</th><th>Stock to add</th><th>Diluent to add</th></tr></thead><tbody>`;
+  let conc=start;
+  for(let i=0;i<steps;i++){
+    const dilFactor=Math.pow(factor,i+1);
+    const c=start/dilFactor;
+    html+=`<tr><td>${i+1}</td><td>${fmtNum(c)} ${startu}</td><td>1:${fmtNum(dilFactor)}</td><td>${fmtNum(fromML(stockML,volu))} ${volu}</td><td>${fmtNum(fromML(dilML,volu))} ${volu}</td></tr>`;
+  }
+  html+='</tbody></table>';
+  html=`<p style="font-size:13px;color:var(--color-text-secondary);margin:0.75rem 0 0">Each tube: add <strong>${fmtNum(fromML(stockML,volu))} ${volu}</strong> of previous tube + <strong>${fmtNum(fromML(dilML,volu))} ${volu}</strong> diluent</p>`+html;
+  document.getElementById('ser-res').innerHTML=html;
+}
+</script>
