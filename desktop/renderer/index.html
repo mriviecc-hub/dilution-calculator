@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>DCS Mission Companion</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>DCS Mission Companion</h1>
+    <span class="status" id="backend-status">checking backend...</span>
+  </header>
+
+  <main>
+    <div class="field">
+      <label for="prompt">Describe the mission</label>
+      <textarea id="prompt" placeholder="e.g. Dawn CAP over Sochi-Adler, two F-16s vs a pair of MiG-29s, clear skies"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Lock in fundamentals (optional)</label>
+      <div class="controls-grid">
+        <div class="control">
+          <span class="control-label">Map</span>
+          <select id="override-theater"><option value="">Auto (from prompt)</option></select>
+        </div>
+        <div class="control">
+          <span class="control-label">Player aircraft</span>
+          <select id="override-aircraft"><option value="">Auto (from prompt)</option></select>
+        </div>
+        <div class="control">
+          <span class="control-label">Time of day</span>
+          <select id="override-time"><option value="">Auto (from prompt)</option></select>
+        </div>
+        <div class="control">
+          <span class="control-label">Weather</span>
+          <select id="override-weather"><option value="">Auto (from prompt)</option></select>
+        </div>
+      </div>
+      <div class="hint">Anything left on "Auto" is inferred from your prompt. A locked value is always used exactly.</div>
+    </div>
+
+    <div class="actions">
+      <button id="generate-btn">Generate mission</button>
+      <button class="secondary" id="new-mission-btn">New mission</button>
+      <span id="generate-loading" style="display:none"><span class="spinner"></span>Building .miz...</span>
+    </div>
+
+    <div class="error-box" id="error-box"></div>
+
+    <div class="result-box" id="result-box">
+      <div class="result-title" id="result-title"></div>
+      <div class="result-briefing" id="result-briefing"></div>
+      <dl class="spec-grid" id="result-grid"></dl>
+      <div class="saved-path" id="result-path"></div>
+      <div class="actions" style="margin-top:14px">
+        <button class="secondary" id="show-in-folder-btn">Show file in folder</button>
+      </div>
+    </div>
+
+    <details class="settings">
+      <summary>Settings</summary>
+
+      <div class="field">
+        <label for="api-key">Anthropic API key (optional)</label>
+        <input type="password" id="api-key" placeholder="sk-ant-..." />
+        <div class="hint">Used locally to call Claude for flexible mission parsing. Never leaves your machine except to api.anthropic.com. Leave blank to use the built-in offline keyword parser instead (works with no key or cost, but needs more literal phrasing - e.g. exact aircraft names).</div>
+      </div>
+
+      <div class="field">
+        <label for="moose-path">Moose.lua path (optional, enables dynamic mission logic)</label>
+        <div class="row">
+          <input type="text" id="moose-path" placeholder="C:\...\Saved Games\DCS.openbeta\Scripts\MOOSE\Moose.lua" />
+          <button class="secondary" id="pick-moose-btn">Browse</button>
+        </div>
+        <div class="hint">One-time download from the official MOOSE releases page. See README for setup.</div>
+      </div>
+
+      <div class="field">
+        <label for="mist-path">mist.lua path (optional, adds the MIST script library)</label>
+        <div class="row">
+          <input type="text" id="mist-path" placeholder="C:\...\Saved Games\DCS.openbeta\Scripts\MIST\mist.lua" />
+          <button class="secondary" id="pick-mist-btn">Browse</button>
+        </div>
+        <div class="hint">One-time download from the official MIST releases page. Embedded and loaded before MOOSE, so your own mission scripts can use MIST helpers. Independent of MOOSE - you can set either, both, or neither.</div>
+      </div>
+
+      <div class="field">
+        <label for="dcs-folder">DCS Missions folder (optional - auto-saves generated missions here)</label>
+        <div class="row">
+          <input type="text" id="dcs-folder" placeholder="C:\...\Saved Games\DCS.openbeta\Missions" />
+          <button class="secondary" id="pick-folder-btn">Browse</button>
+          <button class="secondary" id="autodetect-btn">Auto-detect</button>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="save-settings-btn">Save settings</button>
+        <span id="settings-saved" style="display:none;color:var(--ok);font-size:12px;align-self:center">Saved</span>
+      </div>
+    </details>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

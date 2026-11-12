@@ -1,0 +1,26 @@
+-- Generated dynamic CAP logic (MOOSE SPAWN)
+-- Keeps a defending red presence regenerating near the objective instead of
+-- a one-shot static patrol. Each regeneration randomly picks between the
+-- primary bandit type and a "wildcard" second type, so the composition of
+-- red air isn't identical on every playthrough.
+
+local capPrimary = SPAWN:New("$cap_template_name")
+capPrimary:InitLimit($max_alive_units, $max_groups)
+capPrimary:InitRandomizeRoute(1, 3, 2000)
+
+local capWildcard = SPAWN:New("$cap_wildcard_template_name")
+capWildcard:InitLimit($max_alive_units, $max_groups)
+capWildcard:InitRandomizeRoute(1, 3, 2000)
+
+local function SpawnRandomRedCap()
+  if math.random() < $wildcard_chance then
+    capWildcard:Spawn()
+  else
+    capPrimary:Spawn()
+  end
+end
+
+SpawnRandomRedCap()
+SCHEDULER:New(nil, SpawnRandomRedCap, {}, $respawn_interval_seconds, $respawn_interval_seconds, 0.3)
+
+MESSAGE:New("Bandits airborne near $target_area_name. Weapons free.", 15):ToBlue()

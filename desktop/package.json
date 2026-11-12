@@ -1,0 +1,13 @@
+{
+  "name": "dcs-mission-companion",
+  "version": "0.1.0",
+  "description": "Plain-English DCS World mission generator - desktop companion app",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}

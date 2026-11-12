@@ -1,0 +1,30 @@
+-- Generated dynamic STRIKE logic (MOOSE SPAWN + SCHEDULER)
+-- Reinforces the target with a QRF once it takes losses, and announces
+-- mission-objective completion when the target group is wiped out.
+
+local targetGroupNames = {$target_group_names_lua}
+local qrfTemplateName = "$qrf_template_name"
+local qrfSpawned = false
+local objectiveAnnounced = false
+
+local function CheckTargetStatus()
+  local anyAlive = false
+  for _, gname in ipairs(targetGroupNames) do
+    local grp = GROUP:FindByName(gname)
+    if grp and grp:IsAlive() then
+      anyAlive = true
+      if not qrfSpawned and grp:GetSize() <= $qrf_trigger_threshold then
+        SPAWN:New(qrfTemplateName):Spawn()
+        qrfSpawned = true
+        MESSAGE:New("Enemy QRF scrambled toward $target_area_name!", 15):ToBlue()
+      end
+    end
+  end
+  if not anyAlive and not objectiveAnnounced then
+    objectiveAnnounced = true
+    MESSAGE:New("Target destroyed at $target_area_name. Mission objective complete.", 20):ToBlue()
+    trigger.action.setUserFlag("MISSION_OBJECTIVE_COMPLETE", true)
+  end
+end
+
+SCHEDULER:New(nil, CheckTargetStatus, {}, 15, 15)

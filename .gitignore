@@ -1,0 +1,15 @@
+# Python
+backend/venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node / Electron
+desktop/node_modules/
+desktop/package-lock.json
+
+# Generated missions
+*.miz
+
+# OS
+.DS_Store
