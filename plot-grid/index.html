@@ -518,7 +518,15 @@ $('#importFile').addEventListener('change', async e=>{
   } catch(err){ toast('That file is not a Plot Grid project.'); }
 });
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'project';
-function download(name, text, type){
+// Inside claude.ai the page must ask the viewer via the downloads capability; elsewhere (opened as a local file) a plain link works.
+const dlCap = window.claude && window.claude.use ? window.claude.use('downloads').catch(()=>null) : Promise.resolve(null);
+async function download(name, text, type){
+  const dl = await dlCap;
+  if (dl){
+    try { await dl.save({filename:name, data:text}); toast('Saved '+name); }
+    catch(err){ if (err && err.code!=='declined') toast('Could not save the file here.'); }
+    return;
+  }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([text],{type})); a.download = name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
