@@ -99,6 +99,7 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
 #cardNotes{min-height:180px;resize:vertical;line-height:1.5}
 .dlg-foot{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border)}
 .dlg-foot .grow{flex:1}
+.danger-fill{background:var(--danger);border-color:var(--danger);color:#fff}
 .hint{font-size:12px;color:var(--muted)}
 .empty{padding:60px 20px;text-align:center;color:var(--muted)}
 .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:100}
@@ -169,6 +170,12 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
       <span class="grow"></span>
       <button type="submit" class="primary">Done</button>
     </div>
+  </form>
+</dialog>
+<dialog id="askDlg" style="width:min(400px,calc(100vw - 32px))">
+  <form method="dialog">
+    <div class="dlg-body"><span id="askMsg" style="font-weight:600"></span><input type="text" id="askInput" autocomplete="off" aria-label="Value"></div>
+    <div class="dlg-foot" style="flex-direction:row-reverse"><button value="ok" id="askOk" class="primary">OK</button><button value="cancel" formnovalidate>Cancel</button></div>
   </form>
 </dialog>
 <div class="toast" id="toast"></div>
@@ -314,7 +321,7 @@ function newItem(kind, p){
     ? {id:uid(), title:'New plotline', color:PALETTE[p.rows.length % PALETTE.length]}
     : {id:uid(), title:'Chapter '+(p.cols.length+1), sub:''};
 }
-grid.addEventListener('click', e=>{
+grid.addEventListener('click', async e=>{
   const t = e.target;
   const head = t.closest('[data-kind]');
   if (t.closest('[data-add]')){
@@ -340,7 +347,7 @@ grid.addEventListener('click', e=>{
       focusHead(listOf(proj(),kind)[i+1].id);
     } else if (t.closest('[data-del]')){
       const n = Object.keys(p.cards).filter(k=>k.split('|')[kind==='row'?0:1]===id).length;
-      if (n && !confirm(`Delete "${list[i].title}" and its ${n} card${n>1?'s':''}?`)) return;
+      if (n && !await ask(`Delete "${list[i].title}" and its ${n} card${n>1?'s':''}?`)) return;
       change(p=>{
         listOf(p,kind).splice(i,1);
         for (const k of Object.keys(p.cards)) if (k.split('|')[kind==='row'?0:1]===id) delete p.cards[k];
@@ -436,11 +443,11 @@ $('#cardTitle').addEventListener('input', e=>editField('title', e.target.value))
 $('#cardNotes').addEventListener('input', e=>editField('notes', e.target.value));
 $('#cardTags').addEventListener('input', e=>editField('tags', e.target.value));
 $('#cardStatus').addEventListener('change', e=>editField('status', e.target.value));
-function moveCard(){
+async function moveCard(){
   const to = $('#cardRow').value+'|'+$('#cardCol').value, from = editKey;
   if (to===from) return;
   const p = proj();
-  if (p.cards[to] && !confirm('That cell already has a card. Swap them?')){ openCard(from); return; }
+  if (p.cards[to] && !await ask('That cell already has a card. Swap them?', {ok:'Swap'})){ openCard(from); return; }
   change(p=>{ const a=p.cards[from], b=p.cards[to]; p.cards[to]=a; if (b) p.cards[from]=b; else delete p.cards[from]; });
   openCard(to);
 }
@@ -466,8 +473,8 @@ dlg.addEventListener('close', ()=>{
 
 // ---------- toolbar ----------
 $('#projectSelect').addEventListener('change', e=>{ state.current = e.target.value; undoStack=[]; redoStack=[]; commit(); });
-$('#newProject').addEventListener('click', ()=>{
-  const name = prompt('Project name', 'New project'); if (name===null) return;
+$('#newProject').addEventListener('click', async ()=>{
+  const name = await ask('Name your new project', {input:'New project', ok:'Create'}); if (name===null) return;
   const p = {id:uid(), name:name.trim()||'New project', transposed:false, cards:{},
     rows:[{id:uid(), title:'Main plot', color:PALETTE[0]},{id:uid(), title:'Subplot', color:PALETTE[1]}],
     cols:[1,2,3,4,5].map(n=>({id:uid(), title:'Chapter '+n, sub:''}))};
@@ -480,7 +487,7 @@ $('#statusFilter').addEventListener('change', render);
 const pop = $('#menuPop');
 $('#menuBtn').addEventListener('click', e=>{ e.stopPropagation(); pop.classList.toggle('open'); });
 document.addEventListener('click', e=>{ if (!e.target.closest('.menu')) pop.classList.remove('open'); });
-pop.addEventListener('click', e=>{
+pop.addEventListener('click', async e=>{
   const act = e.target.dataset.act; if (!act) return; pop.classList.remove('open');
   const p = proj();
   if (act==='transpose') change(p=>p.transposed=!p.transposed);
@@ -489,9 +496,9 @@ pop.addEventListener('click', e=>{
     const dark = state.theme ? state.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
     state.theme = dark ? 'light' : 'dark'; commit();
   }
-  if (act==='renameProject'){ const n = prompt('Rename project', p.name); if (n && n.trim()) change(p=>p.name=n.trim()); }
+  if (act==='renameProject'){ const n = await ask('Rename project', {input:p.name, ok:'Rename'}); if (n && n.trim()) change(p=>p.name=n.trim()); }
   if (act==='deleteProject'){
-    if (!confirm(`Delete project "${p.name}"? This cannot be undone.`)) return;
+    if (!await ask(`Delete project "${p.name}"? This cannot be undone.`, {ok:'Delete', danger:true})) return;
     state.projects = state.projects.filter(x=>x.id!==p.id);
     if (!state.projects.length) state.projects.push(sampleProject());
     state.current = state.projects[0].id; undoStack=[]; redoStack=[]; commit();
@@ -508,7 +515,7 @@ $('#importFile').addEventListener('change', async e=>{
     if (!Array.isArray(p.rows)||!Array.isArray(p.cols)||typeof p.cards!=='object') throw new Error('bad');
     p.id = uid(); p.name = p.name || f.name.replace(/\..*$/,'');
     state.projects.push(p); state.current = p.id; undoStack=[]; redoStack=[]; commit(); toast('Imported "'+p.name+'"');
-  } catch(err){ alert('That file is not a Plot Grid project.'); }
+  } catch(err){ toast('That file is not a Plot Grid project.'); }
 });
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'project';
 function download(name, text, type){
@@ -534,6 +541,23 @@ function toCsv(p){
   const lines = [['Plotline', ...p.cols.map(c=>(c.sub?c.sub+' — ':'')+c.title)].map(q).join(',')];
   for (const r of p.rows) lines.push([r.title, ...p.cols.map(c=>{ const k=p.cards[r.id+'|'+c.id]; return k ? (k.title + (k.notes?'\n'+k.notes:'')) : ''; })].map(q).join(','));
   return lines.join('\n');
+}
+
+// in-page replacement for confirm()/prompt(): resolves true/false, or the text (null if cancelled)
+function ask(msg, {input=null, ok='Delete', danger=input===null}={}){
+  return new Promise(resolve=>{
+    const d = $('#askDlg'), inp = $('#askInput'), okBtn = $('#askOk');
+    $('#askMsg').textContent = msg; okBtn.textContent = ok;
+    okBtn.className = danger ? 'primary danger-fill' : 'primary';
+    inp.hidden = input===null; inp.value = input ?? '';
+    d.returnValue = '';
+    d.addEventListener('close', ()=>{
+      const yes = d.returnValue==='ok';
+      resolve(input===null ? yes : (yes ? inp.value : null));
+    }, {once:true});
+    d.showModal();
+    if (input!==null){ inp.focus(); inp.select(); } else okBtn.focus();
+  });
 }
 
 let toastT;
